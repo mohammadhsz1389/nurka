@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nurca - دستیار هوشمند شما</title>
+    
+    <!-- فونت فارسی ویرما -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- تنظیمات عمومی و تم تاریک --- */
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-message-user: #007bff;
+            --bg-message-ai: #2a2a2a;
+            --text-primary: #f0f0f0;
+            --text-secondary: #b0b0b0;
+            --border-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- صفحه لودینگ --- */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 9999;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--bg-message-user);
+            animation: fadeInScale 0.8s ease-out forwards, pulse 2s infinite ease-in-out 0.8s;
+        }
+        .loader-tagline {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* --- کانتینر اصلی چت --- */
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            opacity: 0;
+            animation: fadeInApp 0.5s ease-out 2.5s forwards;
+        }
+
+        @keyframes fadeInApp {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* --- هدر --- */
+        header {
+            background-color: var(--bg-secondary);
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* --- پنجره چت --- */
+        #chat-window {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        #chat-window::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 3px; }
+
+        /* --- پیام‌ها --- */
+        .message {
+            display: flex;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .message.user { align-self: flex-end; }
+        .message.ai { align-self: flex-start; }
+        .message-content {
+            padding: 12px 18px;
+            border-radius: 20px;
+            line-height: 1.6;
+            font-size: 1rem;
+            word-wrap: break-word;
+        }
+        .message.user .message-content {
+            background-color: var(--bg-message-user);
+            color: #ffffff;
+            border-bottom-right-radius: 5px;
+        }
+        .message.ai .message-content {
+            background-color: var(--bg-message-ai);
+            color: var(--text-primary);
+            border-bottom-left-radius: 5px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- نشانگر تایپ --- */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background-color: var(--bg-message-ai);
+            padding: 12px 18px;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        /* --- فوتر و بخش ورودی --- */
+        footer {
+            background-color: var(--bg-secondary);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        #message-input {
+            flex-grow: 1;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            color: var(--text-primary);
+            resize: none;
+            max-height: 100px;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        #message-input:focus {
+            outline: none;
+            border-color: var(--bg-message-user);
+        }
+        #send-button {
+            background-color: var(--bg-message-user);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #send-button:hover { background-color: #0056b3; }
+        #send-button:active { transform: scale(0.95); }
+        #send-button:disabled { background-color: #555; cursor: not-allowed; }
+        #send-button svg { width: 24px; height: 24px; }
+    </style>
+</head>
+<body>
+
+    <!-- صفحه لودینگ -->
+    <div id="loading-screen">
+        <div class="loader-logo">Nurca</div>
+        <div class="loader-tagline">دستیار هوشمند شما</div>
+    </div>
+
+    <!-- کانتینر اصلی چت -->
+    <main id="chat-container">
+        <header>
+            <h1>Nurca</h1>
+        </header>
+
+        <section id="chat-window">
+            <div class="message ai">
+                <div class="message-content">
+                    سلام! من Nurca هستم. چطور می‌توانم کمکتان کنم؟
+                </div>
+            </div>
+            <div class="typing-indicator" id="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </section>
+
+        <footer>
+            <textarea id="message-input" placeholder="پیام خود را بنویسید..." rows="1"></textarea>
+            <button id="send-button" aria-label="ارسال پیام">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </footer>
+    </main>
+
+    <script>
+        // --- عناصر DOM ---
+        const loadingScreen = document.getElementById('loading-screen');
+        const chatContainer = document.getElementById('chat-container');
+        const chatWindow = document.getElementById('chat-window');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // --- تنظیمات API ---
+        const API_KEY = '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';
+        const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        const MODEL = 'z-ai/glm-4.5-air:free';
+
+        // --- تاریخچه گفتگو ---
+        let conversationHistory = [
+            { "role": "system", "content": "شما یک دستیار هوشمند به نام Nurca هستید. لحن شما دوستانه، حرفه‌ای و مفید است و باید همیشه به زبان فارسی پاسخ دهید." }
+        ];
+
+        // --- توابع اصلی ---
+        function setLoading(isLoading) {
+            sendButton.disabled = isLoading;
+            if (isLoading) {
+                sendButton.innerHTML = '...';
+                typingIndicator.style.display = 'flex';
+            } else {
+                sendButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+                typingIndicator.style.display = 'none';
+            }
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function displayMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender);
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+            contentDiv.textContent = text;
+            messageDiv.appendChild(contentDiv);
+            chatWindow.insertBefore(messageDiv, typingIndicator);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        async function sendMessageToAI(userMessage) {
+            conversationHistory.push({ "role": "user", "content": userMessage });
+            setLoading(true);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
+                    body: JSON.stringify({ model: MODEL, messages: conversationHistory })
+                });
+                if (!response.ok) throw new Error(`خطای API: ${response.status}`);
+                const data = await response.json();
+                const aiReply = data.choices[0].message.content;
+                conversationHistory.push({ "role": "assistant", "content": aiReply });
+                displayMessage('ai', aiReply);
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('ai', 'متاسفانه خطایی رخ داد. لطفاً دوباره تلاش کنید.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function handleSend() {
+            const messageText = messageInput.value.trim();
+            if (messageText === '') return;
+            displayMessage('user', messageText);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendMessageToAI(messageText);
+        }
+
+        // --- رویدادنگاران ---
+        window.addEventListener('load', () => {
+            // مخفی کردن صفحه لودینگ و نمایش اپلیکیشن پس از 2.5 ثانیه
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                messageInput.focus();
+            }, 2500);
+        });
+
+        sendButton.addEventListener('click', handleSend);
+        messageInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                handleSend();
+            }
+        });
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>
